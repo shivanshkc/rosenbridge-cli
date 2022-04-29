@@ -71,7 +71,7 @@ func init() {
 	connectCmd.Flags().StringVarP(&connectClientID, "client-id", "c", "",
 		"ID of the client making the connection.")
 
-	// The client ID flag is required.
+	// The --client-id flag is required.
 	if err := connectCmd.MarkFlagRequired("client-id"); err != nil {
 		panic(fmt.Errorf("failed to mark client-id flag as required: %w", err))
 	}
