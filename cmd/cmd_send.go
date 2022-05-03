@@ -69,7 +69,7 @@ var sendCmd = &cobra.Command{
 			}
 
 			// Sending the message.
-			if err := conn.SendMessageAsync(context.Background(), outgoingMessage); err != nil {
+			if _, err := conn.SendMessage(context.Background(), outgoingMessage); err != nil {
 				color.Red("Error while sending message: %s\n", err.Error())
 				return
 			}
