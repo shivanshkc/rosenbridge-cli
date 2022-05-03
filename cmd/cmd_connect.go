@@ -1,11 +1,14 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 
+	"github.com/shivanshkc/rosenbridge-cli/lib"
+
 	"github.com/fatih/color"
-	"github.com/gorilla/websocket"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // connectClientID binds with the client ID flag of the connect command.
@@ -15,52 +18,26 @@ var connectClientID string
 var connectCmd = &cobra.Command{
 	Use:   "connect",
 	Short: "Establishes connection with Rosenbridge and starts streaming messages.",
-	Long:  `Usage: rosen connect <client-id>`,
+	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		// Making sure the user provided a client ID.
-		if connectClientID == "" {
-			exitWithPrintf(1, cmd.Long)
-		}
-
 		// Validating the client ID.
 		if err := checkClientID(connectClientID); err != nil {
 			exitWithPrintf(1, err.Error())
 		}
 
-		// Establishing connection with Rosenbridge.
-		conn, err := getWebsocketConn(connectClientID)
+		// Getting a new connection to Rosenbridge.
+		conn, err := lib.NewConnection(context.Background(), &lib.ConnectionParams{
+			ClientID:     sendSenderID,
+			BaseURL:      viper.GetString("backend.base_url"),
+			IsTLSEnabled: viper.GetBool("backend.is_tls_enabled"),
+		})
 		if err != nil {
 			exitWithPrintf(1, "Failed to connect: %s", err.Error())
 		}
 		color.Green("Connected with Rosenbridge.\n")
-		// Connection will be closed upon function return.
-		defer func() {
-			_ = conn.Close()
-			color.Green("Disconnected from Rosenbridge.\n")
-		}()
 
-		for {
-			messageType, message, err := conn.ReadMessage()
-			if err != nil {
-				// Not using exitWithPrintf here because of the defer-block above.
-				color.Red("Error while reading messages: %s\n", err.Error())
-				return
-			}
-
-			// Handling different message types.
-			switch messageType {
-			case websocket.CloseMessage:
-				// Ending the loop upon connection closure.
-				return
-			case websocket.TextMessage:
-				decodedMessage, _ := unmarshalReceivedMessage(message)
-				printReceivedMessage(decodedMessage)
-			case websocket.BinaryMessage:
-			case websocket.PingMessage:
-			case websocket.PongMessage:
-			default:
-			}
-		}
+		// Printing all incoming messages.
+		conn.IncomingMessageHandler = printMessage
 	},
 }
 

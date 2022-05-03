@@ -6,6 +6,7 @@ require github.com/spf13/cobra v1.4.0
 
 require (
 	github.com/fatih/color v1.13.0
+	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/spf13/viper v1.11.0
 )
