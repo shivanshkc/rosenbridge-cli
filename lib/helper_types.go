@@ -53,6 +53,11 @@ type OutgoingMessage struct {
 type OutgoingMessageResponse struct {
 	// RequestID is the unique identifier of the request to which this response belongs.
 	RequestID string `json:"request_id"`
+	// Code is OK if the request is processable.
+	// If it is negative, it means the message delivery was not even attempted.
+	Code string `json:"code"`
+	// Reason tells why the request is not processable (if it's not).
+	Reason string `json:"reason"`
 	// Results holds the message delivery status for each receiver.
 	Results []*struct {
 		// ReceiverID is the ID of the receiver.

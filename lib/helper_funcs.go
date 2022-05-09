@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/fatih/color"
 )
 
 // DefaultIncomingMessageHandler is the default handler for incoming messages.
@@ -16,7 +18,11 @@ func DefaultOutgoingMessageResponseHandler(ctx context.Context, response *Outgoi
 }
 
 // DefaultConnectionClosureHandler is the default handler for connection closures.
-func DefaultConnectionClosureHandler(ctx context.Context, err interface{}) {}
+func DefaultConnectionClosureHandler(ctx context.Context, err interface{}) {
+	if err != nil {
+		color.Red("Connection closed with error: %v", err)
+	}
+}
 
 // getWebsocketProtocol provides the correct websocket protocol based on the connection params.
 func getWebsocketProtocol(params *ConnectionParams) string {

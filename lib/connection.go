@@ -14,8 +14,6 @@ import (
 type Connection struct {
 	// underlyingConn is the low-level connection object.
 	underlyingConn *websocket.Conn
-	// httpClient is the client for making HTTP requests to Rosenbridge.
-	httpClient *http.Client
 	// connectionParams are the parameters required to create the connection.
 	connectionParams *ConnectionParams
 
@@ -32,7 +30,7 @@ func NewConnection(ctx context.Context, params *ConnectionParams) (*Connection, 
 	// Deciding on the protocol.
 	wsProtocol := getWebsocketProtocol(params)
 	// Forming the API endpoint URL.
-	endpoint := fmt.Sprintf("%s://%s/clients/%s/connection", wsProtocol, params.BaseURL, params.ClientID)
+	endpoint := fmt.Sprintf("%s://%s/api/clients/%s/connection", wsProtocol, params.BaseURL, params.ClientID)
 
 	// Establishing websocket connection.
 	underlyingConn, response, err := websocket.DefaultDialer.Dial(endpoint, nil)
@@ -41,13 +39,9 @@ func NewConnection(ctx context.Context, params *ConnectionParams) (*Connection, 
 	}
 	defer func() { _ = response.Body.Close() }()
 
-	// Creating the HTTP client for synchronous requests.
-	httpClient := &http.Client{}
-
 	// Creating the connection abstraction.
 	conn := &Connection{
 		underlyingConn:                 underlyingConn,
-		httpClient:                     httpClient,
 		connectionParams:               params,
 		IncomingMessageHandler:         DefaultIncomingMessageHandler,
 		OutgoingMessageResponseHandler: DefaultOutgoingMessageResponseHandler,
@@ -60,8 +54,8 @@ func NewConnection(ctx context.Context, params *ConnectionParams) (*Connection, 
 }
 
 // SendMessage sends a new message synchronously.
-// It uses an HTTP request to send the message.
-func (c *Connection) SendMessage(ctx context.Context, request *OutgoingMessage) (*OutgoingMessageResponse, error) {
+// It is a stateless way to send a message and hence does not need to be associated to a connection.
+func SendMessage(ctx context.Context, request *OutgoingMessage, params *ConnectionParams) (*OutgoingMessageResponse, error) {
 	// Setting the message type.
 	request.Type = typeOutgoingMessage
 
@@ -75,10 +69,9 @@ func (c *Connection) SendMessage(ctx context.Context, request *OutgoingMessage) 
 	bodyReader := bytes.NewReader(requestBytes)
 
 	// Deciding on the protocol.
-	httpProtocol := getHTTPProtocol(c.connectionParams)
+	httpProtocol := getHTTPProtocol(params)
 	// Forming the endpoint.
-	endpoint := fmt.Sprintf("%s://%s/clients/%s/messages", httpProtocol, c.connectionParams.BaseURL,
-		c.connectionParams.ClientID)
+	endpoint := fmt.Sprintf("%s://%s/api/clients/%s/messages", httpProtocol, params.BaseURL, params.ClientID)
 
 	// Forming the HTTP request.
 	httpRequest, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bodyReader)
@@ -87,7 +80,7 @@ func (c *Connection) SendMessage(ctx context.Context, request *OutgoingMessage) 
 	}
 
 	// Executing the request.
-	response, err := c.httpClient.Do(httpRequest)
+	response, err := (&http.Client{}).Do(httpRequest)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute http request: %w", err)
 	}

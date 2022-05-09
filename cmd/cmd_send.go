@@ -31,21 +31,12 @@ var sendCmd = &cobra.Command{
 			exitWithPrintf(1, err.Error())
 		}
 
-		// Getting a new connection to Rosenbridge.
-		conn, err := lib.NewConnection(context.Background(), &lib.ConnectionParams{
+		// Creating connection params for sending messages.
+		params := &lib.ConnectionParams{
 			ClientID:     sendSenderID,
 			BaseURL:      viper.GetString("backend.base_url"),
 			IsTLSEnabled: viper.GetBool("backend.is_tls_enabled"),
-		})
-		if err != nil {
-			exitWithPrintf(1, "Failed to connect: %s", err.Error())
 		}
-		color.Green("Connected with Rosenbridge.\n")
-		// Connection will be closed upon function return.
-		defer func() {
-			_ = conn.Close()
-			color.Green("Disconnected from Rosenbridge.\n")
-		}()
 
 		// Creating a reader to read typed messages from stdin.
 		reader := bufio.NewReader(os.Stdin)
@@ -69,7 +60,7 @@ var sendCmd = &cobra.Command{
 			}
 
 			// Sending the message.
-			if _, err := conn.SendMessage(context.Background(), outgoingMessage); err != nil {
+			if _, err := lib.SendMessage(context.Background(), outgoingMessage, params); err != nil {
 				color.Red("Error while sending message: %s\n", err.Error())
 				return
 			}
