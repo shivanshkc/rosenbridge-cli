@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/shivanshkc/rosenbridge-cli/lib"
 
@@ -42,7 +43,7 @@ var sendCmd = &cobra.Command{
 		reader := bufio.NewReader(os.Stdin)
 		for {
 			// Prompt.
-			fmt.Printf(">> You: ")
+			fmt.Printf(">> You: ") //nolint:forbidigo
 
 			// Reading the input.
 			messageBody, err := reader.ReadString('\n')
@@ -51,12 +52,14 @@ var sendCmd = &cobra.Command{
 				return
 			}
 
+			// Remove trailing newline char.
+			messageBody = strings.TrimSuffix(messageBody, "\n")
 			// Forming the exact outgoing message.
-			outgoingMessage := &lib.OutgoingMessage{
+			outgoingMessage := &lib.OutgoingMessageReq{
 				RequestID:   uuid.NewString(),
 				ReceiverIDs: []string{sendReceiverID},
 				Message:     messageBody,
-				Persist:     lib.PersistTrue,
+				SenderID:    params.ClientID,
 			}
 
 			// Sending the message.

@@ -2,16 +2,19 @@ package lib
 
 // Types of data sent/received over the connection to/from Rosenbridge.
 const (
-	typeIncomingMessage         string = "INCOMING_MESSAGE"
-	typeOutgoingMessage         string = "OUTGOING_MESSAGE"
-	typeOutgoingMessageResponse string = "OUTGOING_MESSAGE_RESPONSE"
+	typeIncomingMessageReq string = "INCOMING_MESSAGE_REQ"
+	typeOutgoingMessageReq string = "OUTGOING_MESSAGE_REQ"
+	typeOutgoingMessageRes string = "OUTGOING_MESSAGE_RES"
+	typeErrorRes           string = "ERROR_RES"
 )
 
 const (
-	// PersistTrue persists the message without any dependency on the online/offline state of the receiver.
-	PersistTrue PersistenceCriteria = "true"
-	// PersistFalse never persists the message. If the receiver is offline, the message is lost forever.
-	PersistFalse PersistenceCriteria = "false"
-	// PersistIfOffline persists the message only if the receiver is offline.
-	PersistIfOffline PersistenceCriteria = "if_offline"
+	// codeOK is the success code for all scenarios.
+	codeOK = "OK"
+	// codeOffline indicates that the concerned client is offline.
+	codeOffline = "OFFLINE" //nolint:unused
+	// codeBridgeNotFound is sent when the required bridge does not exist.
+	codeBridgeNotFound = "BRIDGE_NOT_FOUND" //nolint:unused
+	// codeUnknown indicates that an unknown error occurred.
+	codeUnknown = "UNKNOWN" //nolint:unused
 )

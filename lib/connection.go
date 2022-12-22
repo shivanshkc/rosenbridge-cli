@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -30,10 +31,14 @@ func NewConnection(ctx context.Context, params *ConnectionParams) (*Connection, 
 	// Deciding on the protocol.
 	wsProtocol := getWebsocketProtocol(params)
 	// Forming the API endpoint URL.
-	endpoint := fmt.Sprintf("%s://%s/api/clients/%s/connection", wsProtocol, params.BaseURL, params.ClientID)
+	endpoint := fmt.Sprintf("%s://%s/api/bridge", wsProtocol, params.BaseURL)
+
+	// Request headers.
+	headers := &http.Header{}
+	headers.Set("x-client-id", params.ClientID)
 
 	// Establishing websocket connection.
-	underlyingConn, response, err := websocket.DefaultDialer.Dial(endpoint, nil)
+	underlyingConn, response, err := websocket.DefaultDialer.Dial(endpoint, *headers)
 	if err != nil {
 		return nil, fmt.Errorf("error in websocket.Dial: %w", err)
 	}
@@ -55,14 +60,14 @@ func NewConnection(ctx context.Context, params *ConnectionParams) (*Connection, 
 
 // SendMessage sends a new message synchronously.
 // It is a stateless way to send a message and hence does not need to be associated to a connection.
-func SendMessage(ctx context.Context, request *OutgoingMessage, params *ConnectionParams) (*OutgoingMessageResponse, error) {
-	// Setting the message type.
-	request.Type = typeOutgoingMessage
-
-	// Marshalling request to byte array.
+func SendMessage(ctx context.Context, request *OutgoingMessageReq, params *ConnectionParams) (
+	*OutgoingMessageRes, error,
+) {
+	request.SenderID = params.ClientID
+	// Marshalling the request to byte array.
 	requestBytes, err := json.Marshal(request)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request: %w", err)
+		return nil, fmt.Errorf("failed to marshal message: %w", err)
 	}
 
 	// Converting the request byte array to io.Reader for the http client.
@@ -71,13 +76,14 @@ func SendMessage(ctx context.Context, request *OutgoingMessage, params *Connecti
 	// Deciding on the protocol.
 	httpProtocol := getHTTPProtocol(params)
 	// Forming the endpoint.
-	endpoint := fmt.Sprintf("%s://%s/api/clients/%s/messages", httpProtocol, params.BaseURL, params.ClientID)
+	endpoint := fmt.Sprintf("%s://%s/api/message", httpProtocol, params.BaseURL)
 
 	// Forming the HTTP request.
 	httpRequest, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bodyReader)
 	if err != nil {
 		return nil, fmt.Errorf("failed to form the http request: %w", err)
 	}
+	httpRequest.Header.Set("x-request-id", request.RequestID)
 
 	// Executing the request.
 	response, err := (&http.Client{}).Do(httpRequest)
@@ -86,46 +92,39 @@ func SendMessage(ctx context.Context, request *OutgoingMessage, params *Connecti
 	}
 	defer func() { _ = response.Body.Close() }()
 
-	// Getting the response body.
-	responseBody, err := unmarshalHTTPResponse(response)
-	if err != nil {
+	// Decoding the response body.
+	outMessageRes := &OutgoingMessageRes{}
+	if err := anyToAny(response.Body, outMessageRes); err != nil {
 		return nil, fmt.Errorf("failed to get response body: %w", err)
 	}
 
 	// If the request failed completely, we create the error from the custom code of the response.
-	if !isPositiveStatusCode(response.StatusCode) {
-		return nil, fmt.Errorf("request failed: %s", responseBody.CustomCode)
+	if outMessageRes.Code != codeOK {
+		return nil, fmt.Errorf("request failed: %s", outMessageRes.Reason)
 	}
 
-	// Converting the generic http response data into required struct.
-	messageResponse, err := interface2OutgoingMessageResponse(responseBody.Data)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert the http response into required struct: %w", err)
-	}
-
-	// If the http response data did not contain a request ID, we fetch it from the headers.
-	if messageResponse.RequestID == "" {
-		messageResponse.RequestID = response.Header.Get("x-request-id")
-	}
-
-	return messageResponse, nil
+	outMessageRes.RequestID = response.Header.Get("x-request-id")
+	return outMessageRes, nil
 }
 
 // SendMessageAsync sends a new message asynchronously.
 // It uses the websocket connection for sending the message.
 // The response of this request can be handled through the ResponseHandler function.
-func (c *Connection) SendMessageAsync(ctx context.Context, request *OutgoingMessage) error {
-	// Setting the message type.
-	request.Type = typeOutgoingMessage
+func (c *Connection) SendMessageAsync(ctx context.Context, request *OutgoingMessageReq) error {
+	message := &BridgeMessage{
+		Type:      typeOutgoingMessageReq,
+		RequestID: request.RequestID,
+		Body:      request,
+	}
 
-	// Marshalling request to byte array.
-	requestBytes, err := json.Marshal(request)
+	// Marshalling the message to byte array.
+	messageBytes, err := json.Marshal(message)
 	if err != nil {
 		return fmt.Errorf("failed to marshal request: %w", err)
 	}
 
 	// Writing the message to the connection.
-	if err := c.underlyingConn.WriteMessage(websocket.TextMessage, requestBytes); err != nil {
+	if err := c.underlyingConn.WriteMessage(websocket.TextMessage, messageBytes); err != nil {
 		return fmt.Errorf("failed to write message: %w", err)
 	}
 	return nil
@@ -140,6 +139,8 @@ func (c *Connection) Close() error {
 }
 
 // websocketMessageReader manages the websocket connection and messages by calling appropriate handlers.
+//
+//nolint:cyclop
 func websocketMessageReader(ctx context.Context, conn *Connection) {
 	// This routine returns when the connection closes.
 	defer conn.ConnectionClosureHandler(ctx, recover())
@@ -159,31 +160,34 @@ func websocketMessageReader(ctx context.Context, conn *Connection) {
 			// This closes the connection with nil error.
 			panic(nil)
 		case websocket.TextMessage:
-			messageType, err := unmarshalMessageType(message)
-			if err != nil {
+			bridgeMessage := &BridgeMessage{}
+			if err := anyToAny(message, bridgeMessage); err != nil {
 				// If the message type fails to be determined, we assume it to be an incoming message.
-				conn.IncomingMessageHandler(ctx, nil, fmt.Errorf("failed to get message type: %w", err))
+				conn.IncomingMessageHandler(ctx, nil, fmt.Errorf("failed to decode message: %w", err))
 				continue
 			}
 
 			// Handling different message types.
-			switch messageType {
-			case typeIncomingMessage:
-				inMessage, err := unmarshalIncomingMessage(message)
-				if err != nil {
+			switch bridgeMessage.Type {
+			case typeIncomingMessageReq:
+				inMessageReq := &IncomingMessageReq{}
+				if err := anyToAny(bridgeMessage.Body, inMessageReq); err != nil {
 					conn.IncomingMessageHandler(ctx, nil,
 						fmt.Errorf("failed to unmarshal message: %w", err))
 					continue
 				}
-				conn.IncomingMessageHandler(ctx, inMessage, nil)
-			case typeOutgoingMessageResponse:
-				outMessageResp, err := unmarshalOutgoingMessageResponse(message)
-				if err != nil {
+				conn.IncomingMessageHandler(ctx, inMessageReq, nil)
+			case typeOutgoingMessageRes:
+				outMessageRes := &OutgoingMessageRes{}
+				if err := anyToAny(bridgeMessage.Body, outMessageRes); err != nil {
 					conn.OutgoingMessageResponseHandler(ctx, nil,
 						fmt.Errorf("failed to unmarshal message: %w", err))
 					continue
 				}
-				conn.OutgoingMessageResponseHandler(ctx, outMessageResp, nil)
+				conn.OutgoingMessageResponseHandler(ctx, outMessageRes, nil)
+			case typeErrorRes:
+				// If the response type is error, we assume it to be an incoming message.
+				conn.IncomingMessageHandler(ctx, nil, errors.New("unknown error"))
 			default:
 				// Unknown message types are simply ignored.
 			}

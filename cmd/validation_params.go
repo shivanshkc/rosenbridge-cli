@@ -18,5 +18,6 @@ var (
 
 // All validation errors.
 var (
-	errClientID = fmt.Errorf("a client id should be between %d and %d chars, and should match regex %s", clientIDMinLen, clientIDMaxLen, clientIDRegexp.String())
+	errClientID = fmt.Errorf("a client id should be between %d and %d chars, and should match regex %s",
+		clientIDMinLen, clientIDMaxLen, clientIDRegexp.String())
 )

@@ -4,17 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
+	"io"
 
 	"github.com/fatih/color"
 )
 
 // DefaultIncomingMessageHandler is the default handler for incoming messages.
-func DefaultIncomingMessageHandler(ctx context.Context, message *IncomingMessage, err error) {}
+func DefaultIncomingMessageHandler(ctx context.Context, message *IncomingMessageReq, err error) {}
 
 // DefaultOutgoingMessageResponseHandler is the default handler for outgoing message responses.
-func DefaultOutgoingMessageResponseHandler(ctx context.Context, response *OutgoingMessageResponse, err error) {
+func DefaultOutgoingMessageResponseHandler(ctx context.Context, response *OutgoingMessageRes, err error) {
 }
 
 // DefaultConnectionClosureHandler is the default handler for connection closures.
@@ -40,80 +39,46 @@ func getHTTPProtocol(params *ConnectionParams) string {
 	return "http"
 }
 
-// unmarshalMessageType provides the type of the message.
-func unmarshalMessageType(message []byte) (string, error) {
-	// Decoding into a simple map.
-	decoded := map[string]interface{}{}
-	if err := json.Unmarshal(message, &decoded); err != nil {
-		return "", fmt.Errorf("failed to unmarshal message: %w", err)
+// anyToBytes converts the provided input to a byte slice.
+//
+// If the conversion is not possible, it returns a non-nil error.
+func anyToBytes(input interface{}) ([]byte, error) {
+	switch asserted := input.(type) {
+	case []byte:
+		return asserted, nil
+	case string:
+		return []byte(asserted), nil
+	case io.Reader:
+		// Reading all the data.
+		inputBytes, err := io.ReadAll(asserted)
+		if err != nil {
+			return nil, fmt.Errorf("error in io.ReadAll call: %w", err)
+		}
+		// Conversion successful.
+		return inputBytes, nil
+	default:
+		// Marshalling to JSON. This works with all primitive data types and structs etc.
+		inputBytes, err := json.Marshal(input)
+		if err != nil {
+			return nil, fmt.Errorf("error in json.Marshal call: %w", err)
+		}
+		// Conversion successful.
+		return inputBytes, nil
 	}
-	// Checking if there's a type key.
-	mType, exists := decoded["type"]
-	if !exists {
-		return "", fmt.Errorf("no message type")
-	}
-	// Checking if the message type is string.
-	mTypeString, asserted := mType.(string)
-	if !asserted {
-		return "", fmt.Errorf("invalid message type: %v", mType)
-	}
-	return mTypeString, nil
 }
 
-// unmarshalIncomingMessage decodes the provided byte slice into an IncomingMessage.
-func unmarshalIncomingMessage(message []byte) (*IncomingMessage, error) {
-	inMessage := &IncomingMessage{}
-	if err := json.Unmarshal(message, inMessage); err != nil {
-		return nil, fmt.Errorf("error in json.Unmarshal call: %w", err)
-	}
-	return inMessage, nil
-}
-
-// unmarshalOutgoingMessageResponse decodes the provided byte slice into an OutgoingMessageResponse.
-func unmarshalOutgoingMessageResponse(message []byte) (*OutgoingMessageResponse, error) {
-	outMessageResp := &OutgoingMessageResponse{}
-	if err := json.Unmarshal(message, outMessageResp); err != nil {
-		return nil, fmt.Errorf("error in json.Unmarshal call: %w", err)
-	}
-	return outMessageResp, nil
-}
-
-// unmarshalHTTPResponse decodes a http response body into its struct.
-func unmarshalHTTPResponse(response *http.Response) (*httpResponseBody, error) {
-	// Reading into a byte slice.
-	bodyBytes, err := ioutil.ReadAll(response.Body)
+// anyToAny marshals the provided input and then un-marshals it into the provided output.
+func anyToAny(input interface{}, targetOutput interface{}) error {
+	// Marshalling the input.
+	inputBytes, err := anyToBytes(input)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
+		return fmt.Errorf("error in anyToBytes call: %w", err)
 	}
 
-	// Unmarshalling into the struct.
-	responseBody := &httpResponseBody{}
-	if err := json.Unmarshal(bodyBytes, responseBody); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal response body: %w", err)
+	// Unmarshalling into the target.
+	if err := json.Unmarshal(inputBytes, targetOutput); err != nil {
+		return fmt.Errorf("error in json.Unmarshal call: %w", err)
 	}
 
-	return responseBody, nil
-}
-
-// interface2OutgoingMessageResponse converts the provided interface into an *OutgoingMessageResponse.
-// Any conversion errors are reported by the error parameter.
-func interface2OutgoingMessageResponse(input interface{}) (*OutgoingMessageResponse, error) {
-	// Marshalling into json for later unmarshalling into struct.
-	inputBytes, err := json.Marshal(input)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal input: %w", err)
-	}
-
-	// Unmarshalling into struct.
-	messageResponse := &OutgoingMessageResponse{}
-	if err := json.Unmarshal(inputBytes, messageResponse); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal input into struct: %w", err)
-	}
-
-	return messageResponse, nil
-}
-
-// isPositiveStatusCode tells if the provided http status code implies successful operation.
-func isPositiveStatusCode(code int) bool {
-	return code < 300
+	return nil
 }

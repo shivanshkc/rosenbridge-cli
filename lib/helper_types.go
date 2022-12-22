@@ -15,84 +15,73 @@ type ConnectionParams struct {
 	IsTLSEnabled bool
 }
 
-// PersistenceCriteria is an enum for the persistence criteria Rosenbridge supports.
-type PersistenceCriteria string
-
-// IncomingMessage is the schema of an incoming message from Rosenbridge.
-type IncomingMessage struct {
-	// RequestID is the unique identifier of the request that sent this message originally.
+// BridgeMessage is the general schema of all messages that are sent over a bridge.
+type BridgeMessage struct {
+	// Type of the message. It can be used to differentiate and route various kinds of messages.
+	Type string `json:"type"`
+	// RequestID is used to correlate an outgoing-message-request with its corresponding response.
 	RequestID string `json:"request_id"`
-	// SenderID is the ID of the client who sent this message.
+	// Body is the main content of this message.
+	Body interface{} `json:"body"`
+}
+
+// IncomingMessageReq is the schema of an incoming message from Rosenbridge.
+type IncomingMessageReq struct {
+	// SenderID is the ID of the client who sent the message.
 	SenderID string `json:"sender_id"`
 	// Message is the main message content.
 	Message string `json:"message"`
-	// Persist is the persistence criteria of this message, set by the sender.
-	Persist PersistenceCriteria `json:"persist"`
-
-	// Type field is used internally and should not be populated by the caller.
-	Type string `json:"type"`
 }
 
-// OutgoingMessage is the schema of an outgoing message on Rosenbridge.
-type OutgoingMessage struct {
-	// RequestID is the unique identifier of this request.
-	RequestID string `json:"request_id"`
-	// ReceiverIDs is the list of receiver client IDs that are intended to receive this message.
+// OutgoingMessageReq is the schema of an outgoing message on Rosenbridge.
+type OutgoingMessageReq struct {
+	// SenderID is the ID of client who sent this message.
+	SenderID string `json:"sender_id"`
+	// Receivers is the list of client IDs that are intended to receive this message.
 	ReceiverIDs []string `json:"receiver_ids"`
-	// Message is the main message content.
+	// Message is the main message content that needs to be delivered.
 	Message string `json:"message"`
-	// Persist is the persistence criteria of the message.
-	Persist PersistenceCriteria `json:"persist"`
 
-	// Type field is used internally and should not be populated by the caller.
-	Type string `json:"type"`
+	RequestID string `json:"-"`
 }
 
-// OutgoingMessageResponse is the response of sending a message.
+// OutgoingMessageRes is the response of sending a message.
 // It tells which of the clients received the message, and which ones did not, along with the reasons.
-type OutgoingMessageResponse struct {
-	// RequestID is the unique identifier of the request to which this response belongs.
-	RequestID string `json:"request_id"`
+type OutgoingMessageRes struct {
 	// Code is OK if the request is processable.
 	// If it is negative, it means the message delivery was not even attempted.
 	Code string `json:"code"`
 	// Reason tells why the request is not processable (if it's not).
 	Reason string `json:"reason"`
-	// Results holds the message delivery status for each receiver.
-	Results []*struct {
-		// ReceiverID is the ID of the receiver.
-		ReceiverID string `json:"receiver_id"`
+	// Report holds the message delivery status for each receiver.
+	Report map[string][]*struct {
+		// ClientID is the ID of the client to whom the bridge belongs.
+		ClientID string `json:"client_id,omitempty"`
+		// BridgeID is the unique ID of the bridge.
+		BridgeID string `json:"bridge_id,omitempty"`
 		// Code tells the final status of message delivery.
 		Code string `json:"code"`
 		// Reason tells why the delivery failed (if it failed).
 		Reason string `json:"reason"`
-	} `json:"results"`
+	} `json:"report"`
 
-	// Type field is used internally and should not be populated by the caller.
-	Type string `json:"type"`
+	RequestID string `json:"-"`
 }
 
 // IncomingMessageHandlerFunc is the type of func that handles incoming messages.
 // The error parameter notifies the caller of any errors that might occur while receiving/decoding the message.
 //
 // Note that if any error occurs before the type of the message itself could be determined, the message will be assumed
-// as an IncomingMessage, and so the IncomingMessageHandlerFunc will be invoked.
-type IncomingMessageHandlerFunc func(ctx context.Context, message *IncomingMessage, err error)
+// as an IncomingMessageReq, and so the IncomingMessageHandlerFunc will be invoked.
+type IncomingMessageHandlerFunc func(ctx context.Context, message *IncomingMessageReq, err error)
 
 // OutgoingMessageResponseHandlerFunc is the type of func that handles outgoing message responses.
 // The error parameter notifies the caller of any errors that might occur while receiving/decoding the message.
 //
 // Note that if any error occurs before the type of the message itself could be determined, the message will be assumed
-// as an IncomingMessage, and so the IncomingMessageHandlerFunc will be invoked.
-type OutgoingMessageResponseHandlerFunc func(ctx context.Context, response *OutgoingMessageResponse, err error)
+// as an IncomingMessageReq, and so the IncomingMessageHandlerFunc will be invoked.
+type OutgoingMessageResponseHandlerFunc func(ctx context.Context, response *OutgoingMessageRes, err error)
 
 // ConnectionClosureHandlerFunc is the type of func that handles connection closures.
 // The error parameter gives info on why the connection closed.
 type ConnectionClosureHandlerFunc func(ctx context.Context, err interface{})
-
-// httpResponseBody is the schema of a response body received from Rosenbridge.
-type httpResponseBody struct {
-	StatusCode int         `json:"status_code"`
-	CustomCode string      `json:"custom_code"`
-	Data       interface{} `json:"data"`
-}

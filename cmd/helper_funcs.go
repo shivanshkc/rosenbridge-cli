@@ -11,6 +11,8 @@ import (
 )
 
 // exitWithPrintf prints the provided message in Printf style and then calls os.Exit with provided code.
+//
+//nolint:unparam
 func exitWithPrintf(code int, format string, a ...interface{}) {
 	switch code {
 	case 0:
@@ -23,7 +25,7 @@ func exitWithPrintf(code int, format string, a ...interface{}) {
 
 // printMessage prints the provided message in appropriate format.
 // If the provided message is nil, it prints that the message is ill-formatted.
-func printMessage(ctx context.Context, inMessage *lib.IncomingMessage, err error) {
+func printMessage(ctx context.Context, inMessage *lib.IncomingMessageReq, err error) {
 	if err != nil {
 		color.Red(">> [%s] Error while reading the message: %s\n", err.Error())
 		return

@@ -7,7 +7,6 @@ import (
 	"github.com/shivanshkc/rosenbridge-cli/lib"
 
 	"github.com/fatih/color"
-	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -39,17 +38,6 @@ var connectCmd = &cobra.Command{
 
 		// Printing all incoming messages.
 		conn.IncomingMessageHandler = printMessage
-
-		// TODO: Just testing.
-		if err := conn.SendMessageAsync(context.Background(), &lib.OutgoingMessage{
-			RequestID:   uuid.NewString(),
-			ReceiverIDs: []string{"sk"},
-			Message:     "automated message",
-			Persist:     "true",
-		}); err != nil {
-			panic("send message async error: " + err.Error())
-		}
-
 		// Blocking forever. TODO: Replace this with an interruption listener.
 		select {}
 	},
