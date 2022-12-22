@@ -1,3 +1,10 @@
+## [0.1.1](https://github.com/shivanshkc/rosenbridge-cli/compare/v0.1.0...v0.1.1) (2022-12-22)
+
+
+### Bug Fixes
+
+* **core:** add default config values ([c5f940d](https://github.com/shivanshkc/rosenbridge-cli/commit/c5f940d5241eb895ec33f890dc21790af0ef909d))
+
 # [0.1.0](https://github.com/shivanshkc/rosenbridge-cli/compare/v0.0.0...v0.1.0) (2022-12-22)
 
 
