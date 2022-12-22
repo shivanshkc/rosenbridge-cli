@@ -28,11 +28,16 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.rosen.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "",
+		"config file (default is $HOME/.rosen.yaml)")
 }
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
+	// Set the default config values.
+	viper.SetDefault("backend.base_url", "rosenbridge.ledgerkeep.com")
+	viper.SetDefault("backend.is_tls_enabled", true)
+
 	if cfgFile != "" {
 		// Use config file from the flag.
 		viper.SetConfigFile(cfgFile)
