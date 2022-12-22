@@ -1,3 +1,9 @@
 package main
 
-func main() {}
+import (
+	"github.com/shivanshkc/rosenbridge-cli/cmd"
+)
+
+func main() {
+	cmd.Execute()
+}

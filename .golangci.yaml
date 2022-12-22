@@ -8,22 +8,25 @@ linters:
   enable-all: true
   # Following linters are disabled.
   disable:
-    - cyclop
+    - deadcode
     - exhaustivestruct
-    - forbidigo
-    - funlen
+    - exhaustruct
     - gci
     - gochecknoglobals
+    - gochecknoinits
     - godox
     - goerr113
     - golint
-    - gomnd
+    - ifshort
     - interfacer
     - ireturn
-    - lll
     - maligned
     - nlreturn
+    - nosnakecase
+    - paralleltest
     - scopelint
+    - structcheck
     - tagliatelle
-    - varnamelen
+    - testpackage
+    - varcheck
     - wsl
