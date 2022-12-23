@@ -1,3 +1,10 @@
+## [0.1.2](https://github.com/shivanshkc/rosenbridge-cli/compare/v0.1.1...v0.1.2) (2022-12-23)
+
+
+### Bug Fixes
+
+* **docs:** add config section in the readme ([961287b](https://github.com/shivanshkc/rosenbridge-cli/commit/961287b07c66339020b7845819951b35e6bb6b41))
+
 ## [0.1.1](https://github.com/shivanshkc/rosenbridge-cli/compare/v0.1.0...v0.1.1) (2022-12-22)
 
 
