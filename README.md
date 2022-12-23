@@ -37,3 +37,17 @@ $ rosen send -s anakin -r obiwan
 
 Execute `rosen --help` for more information.
 
+## Configurations
+
+Rosenbridge CLI requires only two configuration parameters. They can be provided by creating a `.rosen.yaml` file in the home directory of the user. The yaml file must have the following structure:
+
+```yaml
+---
+backend:
+  # Base URL of the rosenbridge deployment WITHOUT protcol (http, https, ws, wss etc)
+  base_url: rosenbridge.ledgerkeep.com
+  # Flag to specify if the target rosenbridge deployment is using TLS.
+  is_tls_enabled: true
+```
+
+This yaml example is also the default configuration used by the CLI. If users want to specify their own Rosenbridge deployment, it can be done through the `~/.rosen.yaml` file.
