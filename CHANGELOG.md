@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/shivanshkc/rosenbridge-cli/compare/v1.1.0...v1.1.1) (2022-12-25)
+
+
+### Bug Fixes
+
+* **core:** update cold start retry count to 10 ([07bda09](https://github.com/shivanshkc/rosenbridge-cli/commit/07bda09cf27def32ddf9ebc7b36afb6b385ac911))
+
 # [1.1.0](https://github.com/shivanshkc/rosenbridge-cli/compare/v1.0.2...v1.1.0) (2022-12-25)
 
 
