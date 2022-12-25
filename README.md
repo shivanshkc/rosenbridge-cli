@@ -9,7 +9,7 @@ Simply execute:
 go install github.com/shivanshkc/rosenbridge-cli@latest
 ```
 
-To make the commands concise, an alias can be made:
+To make the commands concise, an alias can be added in your `~/.bashrc`:
 ```shell
 alias rosen='rosenbridge-cli'
 ```
@@ -29,7 +29,7 @@ To send a message, execute the following:
 rosen send -s anakin -r obiwan
 ```
 Here, the sender is `anakin` and the receiver is `obiwan`.
-Also, this command will start a shell where messages can be written. It will look something like this:
+This command will start a shell where messages can be written. It will look something like this:
 ```
 $ rosen send -s anakin -r obiwan
 >> You: <write here>
@@ -39,7 +39,8 @@ Execute `rosen --help` for more information.
 
 ## Configurations
 
-Rosenbridge CLI requires only two configuration parameters. They can be provided by creating a `.rosen.yaml` file in the home directory of the user. The yaml file must have the following structure:
+Rosenbridge CLI accepts a few configuration parameters. They can be provided by creating a `.rosen.yaml` file in the
+home directory of the user. The yaml file must have the following structure:
 
 ```yaml
 ---
@@ -48,6 +49,13 @@ backend:
   base_url: rosenbridge.ledgerkeep.com
   # Flag to specify if the target rosenbridge deployment is using TLS.
   is_tls_enabled: true
+
+general:
+  # Since the default Rosenbridge cluster (rosenbridge.ledgerkeep.com) runs on GCP free-tier, it occasionally 
+  # experiences server cold-start problems. The CLI automatically retries the operation if that's the case. So, we need
+  # a max retry count.
+  cold_start_retry_count: 5
 ```
 
-This yaml example is also the default configuration used by the CLI. If users want to specify their own Rosenbridge deployment, it can be done through the `~/.rosen.yaml` file.
+This yaml example is also the default configuration used by the CLI. If users want to specify their own Rosenbridge
+deployment, it can be done through the `~/.rosen.yaml` file.
