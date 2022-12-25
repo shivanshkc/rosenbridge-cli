@@ -1,3 +1,18 @@
+# [1.1.0](https://github.com/shivanshkc/rosenbridge-cli/compare/v1.0.2...v1.1.0) (2022-12-25)
+
+
+### Bug Fixes
+
+* **docs:** add inline message and multiple receiver documentation ([8f1e9c8](https://github.com/shivanshkc/rosenbridge-cli/commit/8f1e9c81457bd250505592f74b9b715a43ab5c81))
+* **docs:** add retry config description in readme ([ae23f26](https://github.com/shivanshkc/rosenbridge-cli/commit/ae23f2643da640f8d62600c36f6d5894a636698c))
+
+
+### Features
+
+* **core:** add -m flag for sending inline messages ([e40df1c](https://github.com/shivanshkc/rosenbridge-cli/commit/e40df1c1306c2ae27508bde19fafd59a4c30c00d))
+* **core:** gcp cloud run cold start error handling ([69cbc44](https://github.com/shivanshkc/rosenbridge-cli/commit/69cbc44307e059cc980a730484cf8b0eb3c8a172))
+* **core:** multiple message receiver support ([096c0df](https://github.com/shivanshkc/rosenbridge-cli/commit/096c0df0bf34c598df0b7720d15373143aecb07a))
+
 ## [0.1.2](https://github.com/shivanshkc/rosenbridge-cli/compare/v0.1.1...v0.1.2) (2022-12-23)
 
 
