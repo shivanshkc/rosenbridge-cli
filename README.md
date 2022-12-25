@@ -26,10 +26,18 @@ Now, all messages that are sent to `obiwan` will start getting printed on the co
 #### Send messages
 To send a message, execute the following:
 ```shell
-rosen send -s anakin -r obiwan
+rosen send -s anakin -r obiwan,quigon,yoda -m 'when master'
 ```
-Here, the sender is `anakin` and the receiver is `obiwan`.
-This command will start a shell where messages can be written. It will look something like this:
+Here, the sender is `anakin`, the receivers are `obiwan`, `quigon` and `yoda`, and the message is `when master`.
+This command sends the message and exits immediately.
+
+If the users need to send multiple messages (more like a chat), then the `-m` flag can be skipped.
+The following command will start a shell where messages can be written continuously.
+```shell
+rosen send -s anakin -r obiwan,quigon,yoda
+```
+
+The output will look something like this:
 ```
 $ rosen send -s anakin -r obiwan
 >> You: <write here>
