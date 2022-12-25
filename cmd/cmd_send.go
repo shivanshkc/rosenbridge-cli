@@ -18,7 +18,7 @@ import (
 )
 
 // These variables bind with the flags of the send command.
-var sendSenderID, sendReceiverID, sendInlineMessage string
+var sendSenderID, sendReceiverIDs, sendInlineMessage string
 
 // sendCmd represents the send command.
 var sendCmd = &cobra.Command{
@@ -26,11 +26,14 @@ var sendCmd = &cobra.Command{
 	Short: "Sends a message or opens a console for writing multiple messages to the intended client.",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		// Validating the IDs.
+		// Validating the inputs.
 		if err := checkClientID(sendSenderID); err != nil {
 			exitWithPrintf(1, err.Error())
 		}
-		if err := checkClientID(sendReceiverID); err != nil {
+
+		// Converting comma-separated receiver ID list to slice.
+		receiverIDs := strings.Split(sendReceiverIDs, ",")
+		if err := checkClientIDSlice(receiverIDs); err != nil {
 			exitWithPrintf(1, err.Error())
 		}
 
@@ -46,7 +49,7 @@ var sendCmd = &cobra.Command{
 			// Forming the exact outgoing message.
 			outgoingMessage := &lib.OutgoingMessageReq{
 				RequestID:   uuid.NewString(),
-				ReceiverIDs: []string{sendReceiverID},
+				ReceiverIDs: receiverIDs,
 				Message:     sendInlineMessage,
 				SenderID:    params.ClientID,
 			}
@@ -74,7 +77,7 @@ var sendCmd = &cobra.Command{
 			// Forming the exact outgoing message.
 			outgoingMessage := &lib.OutgoingMessageReq{
 				RequestID:   uuid.NewString(),
-				ReceiverIDs: []string{sendReceiverID},
+				ReceiverIDs: receiverIDs,
 				Message:     messageBody,
 				SenderID:    params.ClientID,
 			}
@@ -136,13 +139,13 @@ func init() {
 		panic(fmt.Errorf("failed to mark sender flag as required: %w", err))
 	}
 
-	// Setting up the --receiver or -r flag.
-	sendCmd.Flags().StringVarP(&sendReceiverID, "receiver", "r", "",
-		"ID of the client receiving the message(s).")
+	// Setting up the --receivers or -r flag.
+	sendCmd.Flags().StringVarP(&sendReceiverIDs, "receivers", "r", "",
+		"Comma-separated list of client IDs that are intended to receive the message(s).")
 
-	// The --receiver flag is required.
-	if err := sendCmd.MarkFlagRequired("receiver"); err != nil {
-		panic(fmt.Errorf("failed to mark receiver flag as required: %w", err))
+	// The --receivers flag is required.
+	if err := sendCmd.MarkFlagRequired("receivers"); err != nil {
+		panic(fmt.Errorf("failed to mark receivers flag as required: %w", err))
 	}
 
 	// Setting up the --message or -m flag.
