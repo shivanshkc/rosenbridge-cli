@@ -1,5 +1,9 @@
 package lib
 
+import (
+	"errors"
+)
+
 // Types of data sent/received over the connection to/from Rosenbridge.
 const (
 	typeIncomingMessageReq string = "INCOMING_MESSAGE_REQ"
@@ -18,3 +22,6 @@ const (
 	// codeUnknown indicates that an unknown error occurred.
 	codeUnknown = "UNKNOWN" //nolint:unused
 )
+
+// ErrTooManyReq is returned when (mostly) the GCP cloud run instance returns a 429 error.
+var ErrTooManyReq = errors.New("too many requests")

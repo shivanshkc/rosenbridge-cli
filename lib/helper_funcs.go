@@ -82,3 +82,8 @@ func anyToAny(input interface{}, targetOutput interface{}) error {
 
 	return nil
 }
+
+// isCode2xx tells if the given status code is 2xx.
+func isCode2xx(statusCode int) bool {
+	return statusCode/100 == 2 //nolint:gomnd // These are not magic numbers.
+}

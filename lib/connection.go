@@ -92,6 +92,18 @@ func SendMessage(ctx context.Context, request *OutgoingMessageReq, params *Conne
 	}
 	defer func() { _ = response.Body.Close() }()
 
+	// If the status code is not 2xx
+	if !isCode2xx(response.StatusCode) {
+		// Handling recognized errors.
+		if response.StatusCode == http.StatusTooManyRequests {
+			return nil, ErrTooManyReq
+		}
+
+		// Using the body content as the error body.
+		body, _ := anyToBytes(response.Body)
+		return nil, fmt.Errorf("http request failed: %s", string(body))
+	}
+
 	// Decoding the response body.
 	outMessageRes := &OutgoingMessageRes{}
 	if err := anyToAny(response.Body, outMessageRes); err != nil {
