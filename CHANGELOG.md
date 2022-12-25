@@ -13,21 +13,21 @@
 * **core:** gcp cloud run cold start error handling ([69cbc44](https://github.com/shivanshkc/rosenbridge-cli/commit/69cbc44307e059cc980a730484cf8b0eb3c8a172))
 * **core:** multiple message receiver support ([096c0df](https://github.com/shivanshkc/rosenbridge-cli/commit/096c0df0bf34c598df0b7720d15373143aecb07a))
 
-## [0.1.2](https://github.com/shivanshkc/rosenbridge-cli/compare/v0.1.1...v0.1.2) (2022-12-23)
+## [1.0.2](https://github.com/shivanshkc/rosenbridge-cli/compare/v1.0.1...v1.0.2) (2022-12-23)
 
 
 ### Bug Fixes
 
 * **docs:** add config section in the readme ([961287b](https://github.com/shivanshkc/rosenbridge-cli/commit/961287b07c66339020b7845819951b35e6bb6b41))
 
-## [0.1.1](https://github.com/shivanshkc/rosenbridge-cli/compare/v0.1.0...v0.1.1) (2022-12-22)
+## [1.0.1](https://github.com/shivanshkc/rosenbridge-cli/compare/v1.0.0...v1.0.1) (2022-12-22)
 
 
 ### Bug Fixes
 
 * **core:** add default config values ([c5f940d](https://github.com/shivanshkc/rosenbridge-cli/commit/c5f940d5241eb895ec33f890dc21790af0ef909d))
 
-# [0.1.0](https://github.com/shivanshkc/rosenbridge-cli/compare/v0.0.0...v0.1.0) (2022-12-22)
+# [1.0.0](https://github.com/shivanshkc/rosenbridge-cli/compare/v0.0.0...v1.0.0) (2022-12-22)
 
 
 ### Bug Fixes
