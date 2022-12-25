@@ -62,7 +62,7 @@ general:
   # Since the default Rosenbridge cluster (rosenbridge.ledgerkeep.com) runs on GCP free-tier, it occasionally 
   # experiences server cold-start problems. The CLI automatically retries the operation if that's the case. So, we need
   # a max retry count.
-  cold_start_retry_count: 5
+  cold_start_retry_count: 10
 ```
 
 This yaml example is also the default configuration used by the CLI. If users want to specify their own Rosenbridge

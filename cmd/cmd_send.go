@@ -114,7 +114,7 @@ func sendMessageWithColdStartHandling(outMessage *lib.OutgoingMessageReq, params
 		// If the error is 429, we attempt a retry.
 		if errors.Is(err, lib.ErrTooManyReq) {
 			if !isWarningPrinted {
-				color.Yellow("Looks like the server is under load. Retrying...")
+				color.Yellow("Looks like the server is under load. Retrying %d times...", retryCount)
 			}
 
 			isWarningPrinted = true
