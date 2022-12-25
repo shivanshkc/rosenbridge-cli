@@ -18,12 +18,12 @@ import (
 )
 
 // These variables bind with the flags of the send command.
-var sendSenderID, sendReceiverID string
+var sendSenderID, sendReceiverID, sendInlineMessage string
 
 // sendCmd represents the send command.
 var sendCmd = &cobra.Command{
 	Use:   "send",
-	Short: "Opens a console for writing messages to the intended client.",
+	Short: "Sends a message or opens a console for writing multiple messages to the intended client.",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		// Validating the IDs.
@@ -41,7 +41,22 @@ var sendCmd = &cobra.Command{
 			IsTLSEnabled: viper.GetBool("backend.is_tls_enabled"),
 		}
 
-		// Creating a reader to read typed messages from stdin.
+		// If inline message is provided, it is sent and the CLI exits.
+		if sendInlineMessage != "" {
+			// Forming the exact outgoing message.
+			outgoingMessage := &lib.OutgoingMessageReq{
+				RequestID:   uuid.NewString(),
+				ReceiverIDs: []string{sendReceiverID},
+				Message:     sendInlineMessage,
+				SenderID:    params.ClientID,
+			}
+
+			// Sending the message whilst handling Cloud Run errors.
+			_ = sendMessageWithColdStartHandling(outgoingMessage, params)
+			return
+		}
+
+		// Starting a console to read messages continuously.
 		reader := bufio.NewReader(os.Stdin)
 		for {
 			// Prompt.
@@ -66,6 +81,7 @@ var sendCmd = &cobra.Command{
 
 			// Sending the message whilst handling Cloud Run errors.
 			if err := sendMessageWithColdStartHandling(outgoingMessage, params); err != nil {
+				// Exit the CLI if message delivery fails.
 				break
 			}
 		}
@@ -128,4 +144,9 @@ func init() {
 	if err := sendCmd.MarkFlagRequired("receiver"); err != nil {
 		panic(fmt.Errorf("failed to mark receiver flag as required: %w", err))
 	}
+
+	// Setting up the --message or -m flag.
+	sendCmd.Flags().StringVarP(&sendInlineMessage, "message", "m", "",
+		`Optional message. If provided, the message is sent and the CLI exits. Otherwise, a console is opened to
+write multiple messages.`)
 }
