@@ -3,9 +3,11 @@ package cmd
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/shivanshkc/rosenbridge-cli/lib"
 
@@ -62,13 +64,48 @@ var sendCmd = &cobra.Command{
 				SenderID:    params.ClientID,
 			}
 
-			// Sending the message.
-			if _, err := lib.SendMessage(context.Background(), outgoingMessage, params); err != nil {
-				color.Red("Error while sending message: %s\n", err.Error())
-				return
+			// Sending the message whilst handling Cloud Run errors.
+			if err := sendMessageWithColdStartHandling(outgoingMessage, params); err != nil {
+				break
 			}
 		}
 	},
+}
+
+// sendMessageWithColdStartHandling sends the given message using the given connection params.
+// It also handles GCP Cloud Run's annoying 429 errors.
+func sendMessageWithColdStartHandling(outMessage *lib.OutgoingMessageReq, params *lib.ConnectionParams) error {
+	// Number of max retries.
+	retryCount := viper.GetInt("general.cold_start_retry_count")
+
+	// We only print cold-restart warning once, so a flag is required to keep track.
+	var isWarningPrinted bool
+
+	// Starting the retry loop to deal with GCP cold-start errors.
+	for i := 0; i < retryCount; i++ {
+		// Sending the message.
+		_, err := lib.SendMessage(context.Background(), outMessage, params)
+		if err == nil {
+			return nil
+		}
+
+		// This will be logged upon every failure.
+		color.Red("Error while sending message: %s\n", err.Error())
+
+		// If the error is 429, we attempt a retry.
+		if errors.Is(err, lib.ErrTooManyReq) {
+			if !isWarningPrinted {
+				color.Yellow("Looks like the server is under load. Retrying...")
+			}
+
+			isWarningPrinted = true
+			time.Sleep(time.Second)
+		}
+	}
+
+	// Retries didn't work.
+	color.Red("The server is busy. Please try again in some time.")
+	return errors.New("failed to send message")
 }
 
 func init() {
