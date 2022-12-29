@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/shivanshkc/rosenbridge-cli/compare/v1.1.1...v1.2.0) (2022-12-29)
+
+
+### Features
+
+* **core:** update as per rosenbridge api breaking change ([7868955](https://github.com/shivanshkc/rosenbridge-cli/commit/7868955d9b3b1057595b001e09968e1b75e3c765))
+
 ## [1.1.1](https://github.com/shivanshkc/rosenbridge-cli/compare/v1.1.0...v1.1.1) (2022-12-25)
 
 
