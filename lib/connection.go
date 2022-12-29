@@ -31,14 +31,10 @@ func NewConnection(ctx context.Context, params *ConnectionParams) (*Connection, 
 	// Deciding on the protocol.
 	wsProtocol := getWebsocketProtocol(params)
 	// Forming the API endpoint URL.
-	endpoint := fmt.Sprintf("%s://%s/api/bridge", wsProtocol, params.BaseURL)
-
-	// Request headers.
-	headers := &http.Header{}
-	headers.Set("x-client-id", params.ClientID)
+	endpoint := fmt.Sprintf("%s://%s/api/bridge?client_id=%s", wsProtocol, params.BaseURL, params.ClientID)
 
 	// Establishing websocket connection.
-	underlyingConn, response, err := websocket.DefaultDialer.Dial(endpoint, *headers)
+	underlyingConn, response, err := websocket.DefaultDialer.Dial(endpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error in websocket.Dial: %w", err)
 	}
