@@ -1,3 +1,21 @@
+# [2.0.0](https://github.com/shivanshkc/rosenbridge-cli/compare/v1.2.0...v2.0.0) (2025-08-18)
+
+
+### Bug Fixes
+
+* **core:** update default backend URL and simplify linter ([6bde9b5](https://github.com/shivanshkc/rosenbridge-cli/commit/6bde9b5a50e110b22dc49bccd9c3bee0422410b7))
+* **docs:** update readme as per the changes and add TODO.md ([81c34a1](https://github.com/shivanshkc/rosenbridge-cli/commit/81c34a108bce43ba306b8408870c61579262470d))
+
+
+### Features
+
+* **core:** major code and configuration changes ([f5818b6](https://github.com/shivanshkc/rosenbridge-cli/commit/f5818b6111e54cf173f8219c6f0acc9c420766f8))
+
+
+### BREAKING CHANGES
+
+* **core:** viper and config file support removed
+
 # [1.2.0](https://github.com/shivanshkc/rosenbridge-cli/compare/v1.1.1...v1.2.0) (2022-12-29)
 
 
