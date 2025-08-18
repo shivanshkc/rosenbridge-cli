@@ -5,14 +5,12 @@ import (
 	"os"
 	"time"
 
-	"github.com/shivanshkc/rosenbridge-cli/lib"
-
 	"github.com/fatih/color"
+
+	"github.com/shivanshkc/rosenbridge-cli/lib"
 )
 
 // exitWithPrintf prints the provided message in Printf style and then calls os.Exit with provided code.
-//
-//nolint:unparam
 func exitWithPrintf(code int, format string, a ...interface{}) {
 	switch code {
 	case 0:

@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/shivanshkc/rosenbridge-cli/lib"
-
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/shivanshkc/rosenbridge-cli/lib"
 )
 
 // connectClientID binds with the client ID flag of the connect command.

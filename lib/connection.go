@@ -147,8 +147,6 @@ func (c *Connection) Close() error {
 }
 
 // websocketMessageReader manages the websocket connection and messages by calling appropriate handlers.
-//
-//nolint:cyclop
 func websocketMessageReader(ctx context.Context, conn *Connection) {
 	// This routine returns when the connection closes.
 	defer conn.ConnectionClosureHandler(ctx, recover())

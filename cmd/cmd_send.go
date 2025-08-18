@@ -9,12 +9,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/shivanshkc/rosenbridge-cli/lib"
-
 	"github.com/fatih/color"
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/shivanshkc/rosenbridge-cli/lib"
 )
 
 // These variables bind with the flags of the send command.
@@ -63,7 +63,7 @@ var sendCmd = &cobra.Command{
 		reader := bufio.NewReader(os.Stdin)
 		for {
 			// Prompt.
-			fmt.Printf(">> You: ") //nolint:forbidigo
+			fmt.Printf(">> You: ")
 
 			// Reading the input.
 			messageBody, err := reader.ReadString('\n')

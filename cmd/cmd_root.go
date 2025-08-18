@@ -35,9 +35,9 @@ func init() {
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
 	// Set the default config values.
-	viper.SetDefault("backend.base_url", "rosenbridge.ledgerkeep.com")
+	viper.SetDefault("backend.base_url", "rosenbridge.rudraksh.dev")
 	viper.SetDefault("backend.is_tls_enabled", true)
-	viper.SetDefault("general.cold_start_retry_count", 10) //nolint:gomnd // Default value.
+	viper.SetDefault("general.cold_start_retry_count", 10)
 
 	if cfgFile != "" {
 		// Use config file from the flag.
