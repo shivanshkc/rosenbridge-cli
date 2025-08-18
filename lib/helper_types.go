@@ -4,17 +4,6 @@ import (
 	"context"
 )
 
-// ConnectionParams are the params required to create the connection.
-type ConnectionParams struct {
-	// ClientID is the ID to which the connection belongs.
-	ClientID string
-	// BaseURL is the URL of the Rosenbridge deployment without protocol.
-	BaseURL string
-	// IsTLSEnabled is a flag to tell if the deployment is TLS enabled.
-	// If it is true, connection is attempted with "wss" protocol, otherwise "ws" is used.
-	IsTLSEnabled bool
-}
-
 // BridgeMessage is the general schema of all messages that are sent over a bridge.
 type BridgeMessage struct {
 	// Type of the message. It can be used to differentiate and route various kinds of messages.

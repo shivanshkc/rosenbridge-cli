@@ -18,6 +18,8 @@ var (
 
 // All validation errors.
 var (
+	errURL = fmt.Errorf("a valid url is required and it should start with a protocol (ws, wss, http, or https)")
+
 	errClientID = fmt.Errorf("a client id should be between %d and %d chars, and should match regex %s",
 		clientIDMinLen, clientIDMaxLen, clientIDRegexp.String())
 )
