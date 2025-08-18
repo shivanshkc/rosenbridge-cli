@@ -12,7 +12,6 @@ import (
 	"github.com/fatih/color"
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/shivanshkc/rosenbridge-cli/lib"
 )
@@ -24,8 +23,13 @@ var sendSenderID, sendReceiverIDs, sendInlineMessage string
 var sendCmd = &cobra.Command{
 	Use:   "send",
 	Short: "Sends a message or opens a console for writing multiple messages to the intended client.",
-	Long:  ``,
+	Long:  "",
 	Run: func(cmd *cobra.Command, args []string) {
+		// Validating the base URL.
+		if err := checkBaseURL(baseURL); err != nil {
+			exitWithPrintf(1, err.Error())
+		}
+
 		// Validating the inputs.
 		if err := checkClientID(sendSenderID); err != nil {
 			exitWithPrintf(1, err.Error())
@@ -37,13 +41,6 @@ var sendCmd = &cobra.Command{
 			exitWithPrintf(1, err.Error())
 		}
 
-		// Creating connection params for sending messages.
-		params := &lib.ConnectionParams{
-			ClientID:     sendSenderID,
-			BaseURL:      viper.GetString("backend.base_url"),
-			IsTLSEnabled: viper.GetBool("backend.is_tls_enabled"),
-		}
-
 		// If inline message is provided, it is sent and the CLI exits.
 		if sendInlineMessage != "" {
 			// Forming the exact outgoing message.
@@ -51,11 +48,11 @@ var sendCmd = &cobra.Command{
 				RequestID:   uuid.NewString(),
 				ReceiverIDs: receiverIDs,
 				Message:     sendInlineMessage,
-				SenderID:    params.ClientID,
+				SenderID:    sendSenderID,
 			}
 
 			// Sending the message whilst handling Cloud Run errors.
-			_ = sendMessageWithColdStartHandling(outgoingMessage, params)
+			_ = sendMessageWithColdStartHandling(outgoingMessage, baseURL, sendSenderID)
 			return
 		}
 
@@ -79,11 +76,11 @@ var sendCmd = &cobra.Command{
 				RequestID:   uuid.NewString(),
 				ReceiverIDs: receiverIDs,
 				Message:     messageBody,
-				SenderID:    params.ClientID,
+				SenderID:    sendSenderID,
 			}
 
 			// Sending the message whilst handling Cloud Run errors.
-			if err := sendMessageWithColdStartHandling(outgoingMessage, params); err != nil {
+			if err := sendMessageWithColdStartHandling(outgoingMessage, baseURL, sendSenderID); err != nil {
 				// Exit the CLI if message delivery fails.
 				break
 			}
@@ -93,9 +90,10 @@ var sendCmd = &cobra.Command{
 
 // sendMessageWithColdStartHandling sends the given message using the given connection params.
 // It also handles GCP Cloud Run's annoying 429 errors.
-func sendMessageWithColdStartHandling(outMessage *lib.OutgoingMessageReq, params *lib.ConnectionParams) error {
+func sendMessageWithColdStartHandling(outMessage *lib.OutgoingMessageReq, baseURL, senderID string) error {
 	// Number of max retries.
-	retryCount := viper.GetInt("general.cold_start_retry_count")
+	// TODO: Might want to move this to a flag in the future.
+	retryCount := 10
 
 	// We only print cold-restart warning once, so a flag is required to keep track.
 	var isWarningPrinted bool
@@ -103,7 +101,7 @@ func sendMessageWithColdStartHandling(outMessage *lib.OutgoingMessageReq, params
 	// Starting the retry loop to deal with GCP cold-start errors.
 	for i := 0; i < retryCount; i++ {
 		// Sending the message.
-		_, err := lib.SendMessage(context.Background(), outMessage, params)
+		_, err := lib.SendMessage(context.Background(), outMessage, baseURL, senderID)
 		if err == nil {
 			return nil
 		}

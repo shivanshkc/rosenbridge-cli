@@ -6,7 +6,6 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/shivanshkc/rosenbridge-cli/lib"
 )
@@ -20,21 +19,22 @@ var connectCmd = &cobra.Command{
 	Short: "Establishes connection with Rosenbridge and starts streaming messages.",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
+		// Validating the base URL.
+		if err := checkBaseURL(baseURL); err != nil {
+			exitWithPrintf(1, err.Error())
+		}
+
 		// Validating the client ID.
 		if err := checkClientID(connectClientID); err != nil {
 			exitWithPrintf(1, err.Error())
 		}
 
 		// Getting a new connection to Rosenbridge.
-		conn, err := lib.NewConnection(context.Background(), &lib.ConnectionParams{
-			ClientID:     connectClientID,
-			BaseURL:      viper.GetString("backend.base_url"),
-			IsTLSEnabled: viper.GetBool("backend.is_tls_enabled"),
-		})
+		conn, err := lib.NewConnection(context.Background(), baseURL, connectClientID)
 		if err != nil {
 			exitWithPrintf(1, "Failed to connect: %s", err.Error())
 		}
-		color.Green("Connected with Rosenbridge.\n")
+		color.Green("Connected with Rosenbridge at: " + baseURL + "\n")
 
 		// Printing all incoming messages.
 		conn.IncomingMessageHandler = printMessage

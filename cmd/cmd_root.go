@@ -1,20 +1,19 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
-var cfgFile string
+// baseURL variable for binding with a persistent flag.
+var baseURL string
 
 // rootCmd represents the base command when called without any subcommands.
 var rootCmd = &cobra.Command{
 	Use:   "rosen",
 	Short: "A distributed hub for real-time communication between servers.",
-	Long:  ``,
+	Long:  "",
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -26,37 +25,7 @@ func Execute() {
 }
 
 func init() {
-	cobra.OnInitialize(initConfig)
-
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "",
-		"config file (default is $HOME/.rosen.yaml)")
-}
-
-// initConfig reads in config file and ENV variables if set.
-func initConfig() {
-	// Set the default config values.
-	viper.SetDefault("backend.base_url", "rosenbridge.rudraksh.dev")
-	viper.SetDefault("backend.is_tls_enabled", true)
-	viper.SetDefault("general.cold_start_retry_count", 10)
-
-	if cfgFile != "" {
-		// Use config file from the flag.
-		viper.SetConfigFile(cfgFile)
-	} else {
-		// Find home directory.
-		home, err := os.UserHomeDir()
-		cobra.CheckErr(err)
-
-		// Search config in home directory with name ".rosen" (without extension).
-		viper.AddConfigPath(home)
-		viper.SetConfigType("yaml")
-		viper.SetConfigName(".rosen")
-	}
-
-	viper.AutomaticEnv() // read in environment variables that match
-
-	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err == nil {
-		_, _ = fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
-	}
+	// Declaring the optional "url" flag.
+	rootCmd.PersistentFlags().StringVarP(&baseURL, "url", "u", "wss://rosenbridge.rudraksh.dev",
+		"URL of any one node of a Rosenbridge cluster.")
 }

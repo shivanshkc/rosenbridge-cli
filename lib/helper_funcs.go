@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/fatih/color"
 )
@@ -23,20 +24,46 @@ func DefaultConnectionClosureHandler(ctx context.Context, err interface{}) {
 	}
 }
 
-// getWebsocketProtocol provides the correct websocket protocol based on the connection params.
-func getWebsocketProtocol(params *ConnectionParams) string {
-	if params.IsTLSEnabled {
-		return "wss"
+// createWebsocketURL converts "https" URL -> "wss" URL, and "http" URL -> "ws" URL.
+func createWebsocketURL(baseURL string) string {
+	// If the URL is already a websocket URL, there's nothing to do.
+	if strings.HasPrefix(baseURL, "wss://") || strings.HasPrefix(baseURL, "ws://") {
+		return baseURL
 	}
-	return "ws"
+
+	// Handling https URLs.
+	if strings.HasPrefix(baseURL, "https://") {
+		return "wss://" + strings.TrimPrefix(baseURL, "https://")
+	}
+
+	// Handling http URLs.
+	if strings.HasPrefix(baseURL, "http://") {
+		return "ws://" + strings.TrimPrefix(baseURL, "http://")
+	}
+
+	// Should never be the case because of the validations.
+	return baseURL
 }
 
-// getHTTPProtocol provides the correct http protocol based on the connection params.
-func getHTTPProtocol(params *ConnectionParams) string {
-	if params.IsTLSEnabled {
-		return "https"
+// createHTTPURL converts "wss" URL -> "https" URL, and "ws" URL -> "http" URL.
+func createHTTPURL(baseURL string) string {
+	// If the URL is already an HTTP URL, there's nothing to do.
+	if strings.HasPrefix(baseURL, "https://") || strings.HasPrefix(baseURL, "http://") {
+		return baseURL
 	}
-	return "http"
+
+	// Handling wss URLs.
+	if strings.HasPrefix(baseURL, "wss://") {
+		return "https://" + strings.TrimPrefix(baseURL, "wss://")
+	}
+
+	// Handling http URLs.
+	if strings.HasPrefix(baseURL, "ws://") {
+		return "http://" + strings.TrimPrefix(baseURL, "ws://")
+	}
+
+	// Should never be the case because of the validations.
+	return baseURL
 }
 
 // anyToBytes converts the provided input to a byte slice.

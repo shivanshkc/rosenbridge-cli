@@ -15,8 +15,6 @@ import (
 type Connection struct {
 	// underlyingConn is the low-level connection object.
 	underlyingConn *websocket.Conn
-	// connectionParams are the parameters required to create the connection.
-	connectionParams *ConnectionParams
 
 	// IncomingMessageHandler handles incoming message.
 	IncomingMessageHandler IncomingMessageHandlerFunc
@@ -27,11 +25,11 @@ type Connection struct {
 }
 
 // NewConnection creates and returns a new connection.
-func NewConnection(ctx context.Context, params *ConnectionParams) (*Connection, error) {
-	// Deciding on the protocol.
-	wsProtocol := getWebsocketProtocol(params)
+func NewConnection(ctx context.Context, baseURL, clientID string) (*Connection, error) {
+	// Convert the given baseURL which could have any protocol (ws, wss, http or https), into a correct websocket URL.
+	websocketURL := createWebsocketURL(baseURL)
 	// Forming the API endpoint URL.
-	endpoint := fmt.Sprintf("%s://%s/api/bridge?client_id=%s", wsProtocol, params.BaseURL, params.ClientID)
+	endpoint := fmt.Sprintf("%s/api/bridge?client_id=%s", websocketURL, clientID)
 
 	// Establishing websocket connection.
 	underlyingConn, response, err := websocket.DefaultDialer.Dial(endpoint, nil)
@@ -43,7 +41,6 @@ func NewConnection(ctx context.Context, params *ConnectionParams) (*Connection, 
 	// Creating the connection abstraction.
 	conn := &Connection{
 		underlyingConn:                 underlyingConn,
-		connectionParams:               params,
 		IncomingMessageHandler:         DefaultIncomingMessageHandler,
 		OutgoingMessageResponseHandler: DefaultOutgoingMessageResponseHandler,
 		ConnectionClosureHandler:       DefaultConnectionClosureHandler,
@@ -56,10 +53,10 @@ func NewConnection(ctx context.Context, params *ConnectionParams) (*Connection, 
 
 // SendMessage sends a new message synchronously.
 // It is a stateless way to send a message and hence does not need to be associated to a connection.
-func SendMessage(ctx context.Context, request *OutgoingMessageReq, params *ConnectionParams) (
+func SendMessage(ctx context.Context, request *OutgoingMessageReq, baseURL, senderID string) (
 	*OutgoingMessageRes, error,
 ) {
-	request.SenderID = params.ClientID
+	request.SenderID = senderID
 	// Marshalling the request to byte array.
 	requestBytes, err := json.Marshal(request)
 	if err != nil {
@@ -69,10 +66,10 @@ func SendMessage(ctx context.Context, request *OutgoingMessageReq, params *Conne
 	// Converting the request byte array to io.Reader for the http client.
 	bodyReader := bytes.NewReader(requestBytes)
 
-	// Deciding on the protocol.
-	httpProtocol := getHTTPProtocol(params)
+	// Convert the given baseURL which could have any protocol (ws, wss, http or https), into a correct HTTP URL.
+	httpURL := createHTTPURL(baseURL)
 	// Forming the endpoint.
-	endpoint := fmt.Sprintf("%s://%s/api/message", httpProtocol, params.BaseURL)
+	endpoint := fmt.Sprintf("%s/api/message", httpURL)
 
 	// Forming the HTTP request.
 	httpRequest, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bodyReader)
